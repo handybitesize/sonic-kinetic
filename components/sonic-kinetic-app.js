@@ -42,22 +42,85 @@ const WINDOWS = [
 ];
 const MAX_HIT_WINDOW_MS = 150;
 const SOUND_SOURCES = ["Click", "Kick", "Snare", "Hi-Hat", "Drum Kit"];
-const TEST_LEVELS = [1, 2, 3, 4, 5];
+const GROOVE_LIBRARY = [
+  {
+    level: 1,
+    name: "Four On The Floor",
+    source: "House",
+    pattern: [0, 1, 2, 3, 4, 5, 6, 7],
+  },
+  {
+    level: 2,
+    name: "Half-Time Gaps",
+    source: "Hip-Hop",
+    pattern: [0, 2, 4, 6],
+  },
+  {
+    level: 3,
+    name: "Son Clave",
+    source: "Afro-Cuban",
+    pattern: [0, 1.5, 3, 4.5, 6],
+  },
+  {
+    level: 4,
+    name: "Billie Jean Pulse",
+    source: "Pop",
+    pattern: [0, 1.5, 2, 3, 4, 5.5, 6, 7],
+  },
+  {
+    level: 5,
+    name: "Funky Drummer",
+    source: "Breakbeat",
+    pattern: [0, 1, 1.75, 2.5, 3, 4, 5, 5.75, 6.5, 7],
+  },
+  {
+    level: 6,
+    name: "Amen Break",
+    source: "Jungle",
+    pattern: [0, 0.75, 1, 1.5, 2.25, 2.5, 3, 4, 4.75, 5, 5.5, 6.25, 6.5, 7, 7.25, 7.5],
+  },
+  {
+    level: 7,
+    name: "Apache Roll",
+    source: "Old School Break",
+    pattern: [0, 0.5, 1, 1.75, 2.5, 3, 4, 4.5, 5.25, 5.75, 6.5, 7],
+  },
+  {
+    level: 8,
+    name: "Purdie Shuffle",
+    source: "Shuffle",
+    pattern: [0, 0.66, 1.66, 2, 2.66, 3.66, 4, 4.66, 5.66, 6, 6.66, 7.66],
+  },
+  {
+    level: 9,
+    name: "Dembow Drive",
+    source: "Reggaeton",
+    pattern: [0, 1.5, 2, 3, 4, 5.5, 6, 6.75, 7],
+  },
+  {
+    level: 10,
+    name: "Hyper Sync",
+    source: "Footwork",
+    pattern: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5],
+  },
+];
+
+const TEST_LEVELS = GROOVE_LIBRARY.map((groove) => groove.level);
+
+function getGroove(level) {
+  return GROOVE_LIBRARY[Math.min(Math.max(level, 1), GROOVE_LIBRARY.length) - 1];
+}
 
 function getPattern(level) {
-  if (level <= 1) return [0, 1, 2, 3, 4, 5, 6, 7];
-  if (level === 2) return [0, 2, 4, 6];
-  if (level === 3) return [0, 1, 2.5, 3, 4, 5, 6.5, 7];
-  if (level === 4) return [0, 0.75, 1, 1.5, 2.25, 2.5, 3, 4, 4.75, 5, 5.5, 6.25, 6.5, 7, 7.25, 7.5];
-  return [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5];
+  return getGroove(level).pattern;
 }
 
 function getPatternName(level) {
-  if (level <= 1) return "Four On The Floor";
-  if (level === 2) return "Half-Time Gaps";
-  if (level === 3) return "Broken Step";
-  if (level === 4) return "Amen Break";
-  return "Hyper Sync";
+  return getGroove(level).name;
+}
+
+function getPatternSource(level) {
+  return getGroove(level).source;
 }
 
 function scoreTap(tapTime, targetTime) {
@@ -212,6 +275,7 @@ export default function SonicKineticApp() {
 
   const targetPattern = getPatternForSession(difficulty);
   const patternName = getPatternName(difficulty);
+  const patternSource = getPatternSource(difficulty);
   const selectedTrack = TRACKS.find((track) => track.id === selectedTrackId) ?? TRACKS[0];
   const bpm = bpmOverride ?? selectedTrack.bpm;
 
@@ -602,7 +666,7 @@ export default function SonicKineticApp() {
 
   function startNextLevel() {
     cleanupLoop();
-    const nextDifficulty = difficulty + 1;
+    const nextDifficulty = Math.min(difficulty + 1, GROOVE_LIBRARY.length);
     window.scrollTo({ top: 0, behavior: "smooth" });
     setDifficulty(nextDifficulty);
     setPhase("IDLE");
@@ -799,11 +863,11 @@ export default function SonicKineticApp() {
                   <strong>{soundSource}</strong>
                 </label>
                 <label>
-                  <span>Test Level</span>
+                  <span>Test Groove</span>
                   <select className="sk-select" onChange={(event) => setTrackTestLevel(Number(event.target.value))} value={trackTestLevel}>
                     {TEST_LEVELS.map((level) => (
                       <option key={level} value={level}>
-                        {`L${level} · ${getPatternName(level)}`}
+                        {`L${level} · ${getPatternName(level)} · ${getPatternSource(level)}`}
                       </option>
                     ))}
                   </select>
@@ -875,6 +939,10 @@ export default function SonicKineticApp() {
                 <article>
                   <label>Pattern</label>
                   <strong>{patternName}</strong>
+                </article>
+                <article>
+                  <label>Groove</label>
+                  <strong>{patternSource}</strong>
                 </article>
                 <article>
                   <label>Flow</label>
@@ -1022,7 +1090,7 @@ export default function SonicKineticApp() {
                 </article>
                 <article>
                   <label>Difficulty</label>
-                  <strong>L{difficulty}</strong>
+                  <strong>{`L${difficulty} · ${patternName}`}</strong>
                 </article>
                 <article>
                   <label>Expected Beats</label>
