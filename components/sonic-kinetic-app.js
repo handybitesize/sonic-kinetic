@@ -135,6 +135,7 @@ function getTapTargets(phasePhrases, beatsPerPhrase, pattern, phaseStart, beatDu
         absoluteBeat,
         targetBeat: patternBeat,
         time: phaseStart + absoluteBeat * beatDuration,
+        judged: false,
       });
     }
   }
@@ -322,12 +323,12 @@ export default function SonicKineticApp() {
   }
 
   function pushResolvedHit(engine, result, target) {
+    target.judged = true;
     engine.hits.push({
       ...result,
       absoluteBeat: target.absoluteBeat,
       targetBeat: target.targetBeat,
     });
-    engine.targetCursor += 1;
 
     setLastHit(result);
     setHistory((current) => [...current, result.offset]);
@@ -362,7 +363,6 @@ export default function SonicKineticApp() {
       pattern: sessionPattern,
       cueBeats: getCueBeats(nextPhase, phasePhrases, beatsPerPhrase, sessionPattern),
       targets: [],
-      targetCursor: 0,
       hits: [],
     };
 
@@ -413,9 +413,9 @@ export default function SonicKineticApp() {
       }
 
       if (nextPhase === "TAP") {
-        while (engine.targetCursor < engine.targets.length) {
-          const target = engine.targets[engine.targetCursor];
-          if (now <= target.time + MAX_HIT_WINDOW_MS) break;
+        for (const target of engine.targets) {
+          if (target.judged) continue;
+          if (now <= target.time + MAX_HIT_WINDOW_MS) continue;
           pushResolvedHit(
             engine,
             { rating: "MISS", offset: now - target.time, absolute: Math.abs(now - target.time), points: 0, streak: 0, success: false },
@@ -531,8 +531,26 @@ export default function SonicKineticApp() {
   }
 
   function nextTarget(engine, tapTime) {
-    if (engine.targetCursor >= engine.targets.length) return null;
-    return engine.targets[engine.targetCursor];
+    const candidates = engine.targets.filter((target) => !target.judged && Math.abs(tapTime - target.time) <= MAX_HIT_WINDOW_MS);
+    if (!candidates.length) return null;
+    return candidates.reduce((closest, target) => {
+      if (!closest) return target;
+      return Math.abs(tapTime - target.time) < Math.abs(tapTime - closest.time) ? target : closest;
+    }, null);
+  }
+
+  function registerFreeMiss(tapTime) {
+    const miss = {
+      rating: "MISS",
+      offset: 0,
+      absolute: 0,
+      points: 0,
+      streak: 0,
+      success: false,
+    };
+    setLastHit(miss);
+    setHistory((current) => [...current, 0]);
+    setStreak(0);
   }
 
   function handleTap() {
@@ -543,7 +561,12 @@ export default function SonicKineticApp() {
 
     const tapTime = performance.now();
     const target = nextTarget(engine, tapTime);
-    if (!target) return;
+    if (!target) {
+      registerFreeMiss(tapTime);
+      setIsPadPressed(true);
+      window.setTimeout(() => setIsPadPressed(false), 110);
+      return;
+    }
 
     const result = scoreTap(tapTime, target.time);
     pushResolvedHit(engine, result, target);
