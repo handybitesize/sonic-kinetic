@@ -603,8 +603,18 @@ export default function SonicKineticApp() {
   function startNextLevel() {
     cleanupLoop();
     const nextDifficulty = difficulty + 1;
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setDifficulty(nextDifficulty);
-    startSession(nextDifficulty);
+    setPhase("IDLE");
+    setRoute("play");
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(null);
+    setIsBeatActive(false);
+    setIsPadPressed(false);
+    setResultsSummary({ expected: 0, hit: 0, missed: 0 });
+    setResultsTrace([]);
+    setQueuedSession({ trackId: selectedTrackId, level: nextDifficulty });
   }
 
   function resetProgress() {
