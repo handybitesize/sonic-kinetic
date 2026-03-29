@@ -1,0 +1,905 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+const TRACKS = [
+  {
+    id: "cybernetic-pulse",
+    title: "Cybernetic Pulse",
+    artist: "Hyper-Glitch Unit",
+    bpm: 128,
+    energy: 1,
+    summary: "Quarter-note control drill with a heavy club pocket.",
+    colorA: "#d394ff",
+    colorB: "#00fbfb",
+  },
+  {
+    id: "neon-horizon",
+    title: "Neon Horizon",
+    artist: "Retro-Future Syndicate",
+    bpm: 142,
+    energy: 2,
+    summary: "Fast-reactive loop for tighter timing windows and less forgiveness.",
+    colorA: "#ff8cb5",
+    colorB: "#d394ff",
+  },
+  {
+    id: "kinetic-flow",
+    title: "Kinetic Flow",
+    artist: "Velocity Zero",
+    bpm: 110,
+    energy: 1,
+    summary: "Slower groove that exposes drift and trains internal timing.",
+    colorA: "#69fd5d",
+    colorB: "#00fbfb",
+  },
+];
+
+const WINDOWS = [
+  { rating: "PERFECT", max: 50, points: 1000, streak: 1 },
+  { rating: "GREAT", max: 100, points: 500, streak: 1 },
+  { rating: "GOOD", max: 150, points: 200, streak: 0 },
+];
+const MAX_HIT_WINDOW_MS = 150;
+const SOUND_SOURCES = ["Click", "Kick", "Snare", "Hi-Hat", "Drum Kit"];
+
+function getPattern(level) {
+  if (level <= 1) return [0, 1, 2, 3, 4, 5, 6, 7];
+  if (level === 2) return [0, 2, 4, 6];
+  if (level === 3) return [0, 1, 2.5, 3, 4, 5, 6.5, 7];
+  if (level === 4) return [0, 0.75, 1, 1.5, 2.25, 2.5, 3, 4, 4.75, 5, 5.5, 6.25, 6.5, 7, 7.25, 7.5];
+  return [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5];
+}
+
+function getPatternName(level) {
+  if (level <= 1) return "Four On The Floor";
+  if (level === 2) return "Half-Time Gaps";
+  if (level === 3) return "Broken Step";
+  if (level === 4) return "Amen Break";
+  return "Hyper Sync";
+}
+
+function scoreTap(tapTime, targetTime) {
+  const offset = tapTime - targetTime;
+  const absolute = Math.abs(offset);
+  const window = WINDOWS.find((item) => absolute <= item.max);
+
+  if (!window) {
+    return { rating: "MISS", offset, absolute, points: 0, streak: 0, success: false };
+  }
+
+  return {
+    rating: window.rating,
+    offset,
+    absolute,
+    points: window.points,
+    streak: window.streak,
+    success: true,
+  };
+}
+
+function averageOffset(history) {
+  if (!history.length) return 0;
+  return Math.round(history.reduce((sum, value) => sum + Math.abs(value), 0) / history.length);
+}
+
+function formatOffset(value) {
+  const rounded = Math.round(value);
+  if (rounded === 0) return "0ms";
+  return `${rounded > 0 ? "+" : ""}${rounded}ms`;
+}
+
+function accuracyRate(history) {
+  if (!history.length) return 0;
+  return Math.max(0, Math.min(100, Math.round(100 - (averageOffset(history) / 150) * 100)));
+}
+
+function getPatternForSession(level) {
+  return getPattern(level);
+}
+
+function getCueBeats(phase, phasePhrases, beatsPerPhrase, pattern) {
+  if (phase === "GET_READY") {
+    const cues = [];
+    for (let phrase = 0; phrase < phasePhrases; phrase += 1) {
+      for (const patternBeat of pattern) {
+        cues.push(phrase * beatsPerPhrase + patternBeat);
+      }
+    }
+    return cues.sort((left, right) => left - right);
+  }
+
+  if (phase === "LISTEN" || phase === "TAP") {
+    const cues = [];
+    for (let phrase = 0; phrase < phasePhrases; phrase += 1) {
+      for (const patternBeat of pattern) {
+        cues.push(phrase * beatsPerPhrase + patternBeat);
+      }
+    }
+    return cues.sort((left, right) => left - right);
+  }
+
+  if (phase === "COUNT_IN") {
+    return Array.from({ length: phasePhrases * beatsPerPhrase }, (_, beat) => beat);
+  }
+
+  return [];
+}
+
+function getTapTargets(phasePhrases, beatsPerPhrase, pattern, phaseStart, beatDuration) {
+  const targets = [];
+  for (let phrase = 0; phrase < phasePhrases; phrase += 1) {
+    for (const patternBeat of pattern) {
+      const absoluteBeat = phrase * beatsPerPhrase + patternBeat;
+      targets.push({
+        absoluteBeat,
+        targetBeat: patternBeat,
+        time: phaseStart + absoluteBeat * beatDuration,
+      });
+    }
+  }
+  return targets.sort((left, right) => left.time - right.time);
+}
+
+export default function SonicKineticApp() {
+  const beatsPerPhrase = 8;
+  const listenPhrases = 1;
+  const getReadyPhrases = 1;
+  const tapPhrases = 4;
+
+  const [route, setRoute] = useState("home");
+  const [phase, setPhase] = useState("IDLE");
+  const [selectedTrackId, setSelectedTrackId] = useState(TRACKS[0].id);
+  const [bpmOverride, setBpmOverride] = useState(null);
+  const [difficulty, setDifficulty] = useState(1);
+  const [soundSource, setSoundSource] = useState("Drum Kit");
+  const [successLoops, setSuccessLoops] = useState(0);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [lastHit, setLastHit] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [isBeatActive, setIsBeatActive] = useState(false);
+  const [isPadPressed, setIsPadPressed] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
+  const [countdownBeat, setCountdownBeat] = useState(null);
+
+  const targetPattern = getPatternForSession(difficulty);
+  const patternName = getPatternName(difficulty);
+  const selectedTrack = TRACKS.find((track) => track.id === selectedTrackId) ?? TRACKS[0];
+  const bpm = bpmOverride ?? selectedTrack.bpm;
+
+  const audioContextRef = useRef(null);
+  const audioBusRef = useRef(null);
+  const noiseBufferRef = useRef(null);
+  const animationRef = useRef(null);
+  const phaseTimeoutRef = useRef(null);
+  const engineRef = useRef(null);
+
+  function cleanupLoop() {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+    if (phaseTimeoutRef.current) {
+      clearTimeout(phaseTimeoutRef.current);
+      phaseTimeoutRef.current = null;
+    }
+    if (audioBusRef.current) {
+      audioBusRef.current.disconnect();
+      audioBusRef.current = null;
+    }
+    engineRef.current = null;
+  }
+
+  function ensureAudio() {
+    if (typeof window === "undefined") return null;
+    if (!audioContextRef.current) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioContextRef.current = new Ctx();
+    }
+
+    if (audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+
+    setAudioReady(true);
+    return audioContextRef.current;
+  }
+
+  function ensureNoiseBuffer(audioContext) {
+    if (noiseBufferRef.current) return noiseBufferRef.current;
+    const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.2, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let index = 0; index < data.length; index += 1) {
+      data[index] = Math.random() * 2 - 1;
+    }
+    noiseBufferRef.current = buffer;
+    return buffer;
+  }
+
+  function playClick(audioContext, outputNode, when, emphasis) {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = emphasis ? "triangle" : "sine";
+    osc.frequency.value = emphasis ? 1200 : 860;
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(emphasis ? 0.12 : 0.08, when + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.06);
+    osc.connect(gain);
+    gain.connect(outputNode);
+    osc.start(when);
+    osc.stop(when + 0.08);
+  }
+
+  function playKick(audioContext, outputNode, when, emphasis) {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(emphasis ? 150 : 120, when);
+    osc.frequency.exponentialRampToValueAtTime(42, when + 0.12);
+    gain.gain.setValueAtTime(emphasis ? 0.9 : 0.7, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.18);
+    osc.connect(gain);
+    gain.connect(outputNode);
+    osc.start(when);
+    osc.stop(when + 0.2);
+  }
+
+  function playSnare(audioContext, outputNode, when) {
+    const noise = audioContext.createBufferSource();
+    noise.buffer = ensureNoiseBuffer(audioContext);
+    const noiseFilter = audioContext.createBiquadFilter();
+    const noiseGain = audioContext.createGain();
+    noiseFilter.type = "highpass";
+    noiseFilter.frequency.value = 1400;
+    noiseGain.gain.setValueAtTime(0.42, when);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, when + 0.11);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(outputNode);
+    noise.start(when);
+    noise.stop(when + 0.12);
+
+    const tone = audioContext.createOscillator();
+    const toneGain = audioContext.createGain();
+    tone.type = "triangle";
+    tone.frequency.setValueAtTime(180, when);
+    toneGain.gain.setValueAtTime(0.18, when);
+    toneGain.gain.exponentialRampToValueAtTime(0.001, when + 0.08);
+    tone.connect(toneGain);
+    toneGain.connect(outputNode);
+    tone.start(when);
+    tone.stop(when + 0.09);
+  }
+
+  function playHat(audioContext, outputNode, when, emphasis) {
+    const noise = audioContext.createBufferSource();
+    noise.buffer = ensureNoiseBuffer(audioContext);
+    const filter = audioContext.createBiquadFilter();
+    const gain = audioContext.createGain();
+    filter.type = "highpass";
+    filter.frequency.value = emphasis ? 9000 : 7000;
+    gain.gain.setValueAtTime(emphasis ? 0.18 : 0.1, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + (emphasis ? 0.08 : 0.04));
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(outputNode);
+    noise.start(when);
+    noise.stop(when + 0.09);
+  }
+
+  function playCue(audioContext, outputNode, when, cueBeat, sessionSource) {
+    const phrasePosition = cueBeat % beatsPerPhrase;
+    const downbeat = phrasePosition === 0 || phrasePosition === 4;
+
+    if (sessionSource === "Kick") {
+      playKick(audioContext, outputNode, when, downbeat);
+      return;
+    }
+    if (sessionSource === "Snare") {
+      playSnare(audioContext, outputNode, when);
+      return;
+    }
+    if (sessionSource === "Hi-Hat") {
+      playHat(audioContext, outputNode, when, downbeat);
+      return;
+    }
+    if (sessionSource === "Drum Kit") {
+      if (downbeat) {
+        playKick(audioContext, outputNode, when, true);
+      } else if (phrasePosition === 2 || phrasePosition === 6) {
+        playSnare(audioContext, outputNode, when);
+      } else {
+        playHat(audioContext, outputNode, when, false);
+      }
+      return;
+    }
+
+    playClick(audioContext, outputNode, when, downbeat);
+  }
+
+  function pushResolvedHit(engine, result, target) {
+    engine.hits.push({
+      ...result,
+      absoluteBeat: target.absoluteBeat,
+      targetBeat: target.targetBeat,
+    });
+    engine.targetCursor += 1;
+
+    setLastHit(result);
+    setHistory((current) => [...current, result.offset]);
+    setScore((current) => current + result.points);
+    setStreak((current) => {
+      const next = result.success && result.streak > 0 ? current + 1 : result.success ? current : 0;
+      setBestStreak((best) => Math.max(best, next));
+      return next;
+    });
+  }
+
+  function resolveSessionBpm(trackIdOverride) {
+    if (bpmOverride !== null) return bpmOverride;
+    const trackForSession = TRACKS.find((track) => track.id === (trackIdOverride ?? selectedTrackId)) ?? TRACKS[0];
+    return trackForSession.bpm;
+  }
+
+  function startEngine(nextPhase, phasePhrases, sessionPattern, sessionBpm, onComplete) {
+    cleanupLoop();
+
+    const beatDuration = 60000 / sessionBpm;
+    const totalBeats = phasePhrases * beatsPerPhrase;
+    const phaseLeadInMs = 60;
+    const phaseStart = performance.now() + phaseLeadInMs;
+
+    engineRef.current = {
+      phase: nextPhase,
+      phaseStart,
+      beatDuration,
+      totalBeats,
+      beatsPerPhrase,
+      pattern: sessionPattern,
+      cueBeats: getCueBeats(nextPhase, phasePhrases, beatsPerPhrase, sessionPattern),
+      targets: [],
+      targetCursor: 0,
+      hits: [],
+    };
+
+    if (nextPhase === "TAP") {
+      engineRef.current.targets = getTapTargets(phasePhrases, beatsPerPhrase, sessionPattern, phaseStart, beatDuration);
+    }
+
+    setPhase(nextPhase);
+    setRoute("play");
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(nextPhase === "GET_READY" ? phasePhrases * beatsPerPhrase : null);
+
+    const audio = ensureAudio();
+    let outputNode = null;
+
+    if (audio) {
+      outputNode = audio.createGain();
+      outputNode.gain.value = 1;
+      outputNode.connect(audio.destination);
+      audioBusRef.current = outputNode;
+
+      const audioStart = audio.currentTime + phaseLeadInMs / 1000;
+      for (const cueBeat of engineRef.current.cueBeats) {
+        const cueTime = audioStart + (cueBeat * beatDuration) / 1000;
+        playCue(audio, outputNode, cueTime, cueBeat, soundSource);
+      }
+    }
+
+    const frame = () => {
+      const engine = engineRef.current;
+      if (!engine) return;
+
+      const now = performance.now();
+      const elapsed = now - engine.phaseStart;
+      if (elapsed < 0) {
+        animationRef.current = requestAnimationFrame(frame);
+        return;
+      }
+
+      const beatFloat = elapsed / engine.beatDuration;
+      const wholeBeat = Math.floor(beatFloat);
+
+      setIsBeatActive(elapsed % engine.beatDuration < 140);
+      if (nextPhase === "GET_READY") {
+        const beatsRemaining = Math.max(1, engine.totalBeats - wholeBeat);
+        setCountdownBeat(beatsRemaining);
+      }
+
+      if (nextPhase === "TAP") {
+        while (engine.targetCursor < engine.targets.length) {
+          const target = engine.targets[engine.targetCursor];
+          if (now <= target.time + MAX_HIT_WINDOW_MS) break;
+          pushResolvedHit(
+            engine,
+            { rating: "MISS", offset: now - target.time, absolute: Math.abs(now - target.time), points: 0, streak: 0, success: false },
+            target
+          );
+        }
+      }
+
+      const nextMarkers = [];
+      for (let index = -3; index <= 8; index += 1) {
+        const beatTime = now + index * engine.beatDuration;
+        const distance = beatTime - now;
+        const left = 50 + (distance / (engine.beatDuration * 2.5)) * 50;
+        const position = ((((beatTime - engine.phaseStart) / engine.beatDuration) % engine.beatsPerPhrase) + engine.beatsPerPhrase) % engine.beatsPerPhrase;
+        const target = nextPhase === "TAP" && sessionPattern.some((value) => Math.abs(value - position) < 0.12);
+        const hit = engine.hits.some((entry) => Math.abs(entry.targetBeat - position) < 0.12 && entry.success);
+        if (left > -10 && left < 110) {
+          nextMarkers.push({ left, target, hit });
+        }
+      }
+      setMarkers(nextMarkers);
+
+      if (elapsed >= engine.totalBeats * engine.beatDuration) {
+        cleanupLoop();
+        onComplete(engine);
+        return;
+      }
+
+      animationRef.current = requestAnimationFrame(frame);
+    };
+
+    animationRef.current = requestAnimationFrame(frame);
+  }
+
+  function startSession(levelOverride = difficulty, trackIdOverride) {
+    const sessionPattern = getPatternForSession(levelOverride);
+    const sessionBpm = resolveSessionBpm(trackIdOverride);
+
+    startEngine("LISTEN", listenPhrases, sessionPattern, sessionBpm, () => {
+      startEngine("GET_READY", getReadyPhrases, sessionPattern, sessionBpm, () => {
+        startEngine("TAP", tapPhrases, sessionPattern, sessionBpm, (engine) => {
+          const expectedHitCount = sessionPattern.length * tapPhrases;
+          const cleanRound = engine.hits.length === expectedHitCount && engine.hits.every((hit) => hit.success);
+          const nextSuccessLoops = cleanRound ? successLoops + 1 : 0;
+
+          setSuccessLoops(nextSuccessLoops);
+          setPhase("RESULTS");
+          setRoute("results");
+        });
+      });
+    });
+  }
+
+  function restartSession() {
+    cleanupLoop();
+    startSession();
+  }
+
+  function stopCurrentRun(nextRoute = "home") {
+    cleanupLoop();
+    setPhase("IDLE");
+    setRoute(nextRoute);
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(null);
+    setIsBeatActive(false);
+    setIsPadPressed(false);
+  }
+
+  function startFreshPractice(nextTrackId) {
+    cleanupLoop();
+    if (nextTrackId) {
+      setSelectedTrackId(nextTrackId);
+      setBpmOverride(null);
+    }
+    setDifficulty(1);
+    setSuccessLoops(0);
+    setScore(0);
+    setStreak(0);
+    setBestStreak(0);
+    setHistory([]);
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(null);
+    startSession(1, nextTrackId);
+  }
+
+  function retryLevel() {
+    cleanupLoop();
+    startSession();
+  }
+
+  function startNextLevel() {
+    cleanupLoop();
+    const nextDifficulty = difficulty + 1;
+    setDifficulty(nextDifficulty);
+    startSession(nextDifficulty);
+  }
+
+  function resetProgress() {
+    cleanupLoop();
+    setPhase("IDLE");
+    setRoute("home");
+    setDifficulty(1);
+    setSuccessLoops(0);
+    setScore(0);
+    setStreak(0);
+    setBestStreak(0);
+    setHistory([]);
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(null);
+  }
+
+  function nextTarget(engine, tapTime) {
+    if (engine.targetCursor >= engine.targets.length) return null;
+    return engine.targets[engine.targetCursor];
+  }
+
+  function handleTap() {
+    const engine = engineRef.current;
+    if (!engine || engine.phase !== "TAP") return;
+
+    ensureAudio();
+
+    const tapTime = performance.now();
+    const target = nextTarget(engine, tapTime);
+    if (!target) return;
+
+    const result = scoreTap(tapTime, target.time);
+    pushResolvedHit(engine, result, target);
+
+    setIsPadPressed(true);
+    window.setTimeout(() => setIsPadPressed(false), 110);
+  }
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (phase === "TAP") {
+          handleTap();
+        } else if (phase === "IDLE") {
+          startSession();
+        }
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [phase, bpm, difficulty, successLoops, targetPattern]);
+
+  useEffect(() => () => cleanupLoop(), []);
+
+  const accuracy = accuracyRate(history);
+  const currentRating =
+    lastHit?.rating ??
+    (phase === "LISTEN" ? "LISTEN" : phase === "GET_READY" ? "GET READY" : phase === "TAP" ? "READY" : "SYNC");
+  const currentOffset = lastHit ? formatOffset(lastHit.offset) : "Lock the pulse";
+  const phaseLabel = phase.replaceAll("_", " ");
+  const phaseTone = phase.toLowerCase();
+  const toastTone = currentRating.toLowerCase().replaceAll(" ", "-");
+  const flowLabel = `1 listen phrase (2 bars) • 1 ready phrase (2 bars) • ${tapPhrases} tap phrases (8 bars)`;
+
+  return (
+    <main className="sk-app">
+      <header className="sk-topbar">
+        <button className="sk-brand" onClick={() => stopCurrentRun("home")} type="button">
+          Sonic Kinetic
+        </button>
+        <div className="sk-topbarMeta">
+          <span className={`sk-status ${audioReady ? "is-ready" : ""}`}>{audioReady ? "Audio Armed" : "Audio Idle"}</span>
+          <span className="sk-chip">{soundSource}</span>
+          <span className="sk-chip">{bpm} BPM</span>
+        </div>
+      </header>
+
+      <section className="sk-shell">
+        <nav className="sk-nav">
+          <button className={route === "home" ? "is-active" : ""} onClick={() => stopCurrentRun("home")} type="button">Home</button>
+          <button className={route === "tracks" ? "is-active" : ""} onClick={() => stopCurrentRun("tracks")} type="button">Tracks</button>
+          <button className={route === "play" ? "is-active" : ""} onClick={() => setRoute("play")} type="button">Play</button>
+          <button className={route === "results" ? "is-active" : ""} onClick={() => stopCurrentRun("results")} type="button">Stats</button>
+        </nav>
+
+        {route === "home" && (
+          <section className="sk-hero">
+            <div className="sk-copy">
+              <span className="sk-eyebrow">Neural Rhythm Engine</span>
+              <h1>
+                MASTER THE <span>SONIC FLOW</span>
+              </h1>
+              <p>
+                Listen to the bar. Internalize the pocket. Strike the beat inside a moving timing window and
+                level up into denser, faster patterns.
+              </p>
+              <div className="sk-actions">
+                <button className="sk-button sk-buttonPrimary" onClick={() => startFreshPractice()} type="button">Start Practice</button>
+                <button className="sk-button sk-buttonSecondary" onClick={() => stopCurrentRun("tracks")} type="button">Browse Tracks</button>
+              </div>
+            </div>
+
+            <div className="sk-visualPanel">
+              <div className="sk-waveform">
+                {[36, 72, 58, 92, 48, 84, 64, 38].map((height, index) => (
+                  <span key={index} style={{ height: `${height}%` }} />
+                ))}
+              </div>
+              <div className="sk-heroStats">
+                <article>
+                  <label>Current Deck</label>
+                  <strong>{selectedTrack.title}</strong>
+                </article>
+                <article>
+                  <label>Difficulty</label>
+                  <strong>{`L${difficulty} · ${patternName}`}</strong>
+                </article>
+                <article>
+                  <label>Best Streak</label>
+                  <strong>{bestStreak}</strong>
+                </article>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {route === "tracks" && (
+          <section className="sk-tracksView">
+            <div className="sk-panel">
+              <span className="sk-eyebrow">Track Selection</span>
+              <h2>Pick a deck and tune the loop.</h2>
+              <p>
+                Fixed flow: first loop is listen-only, second loop is get-ready with a beat countdown, then four full
+                bars of interactive tapping before the score screen.
+              </p>
+
+              <div className="sk-settings">
+                <label>
+                  <span>BPM Override</span>
+                  <input max="160" min="96" onChange={(event) => setBpmOverride(Number(event.target.value))} type="range" value={bpm} />
+                  <strong>{bpm}</strong>
+                </label>
+                <label>
+                  <span>Sound Source</span>
+                  <select className="sk-select" onChange={(event) => setSoundSource(event.target.value)} value={soundSource}>
+                    {SOUND_SOURCES.map((source) => (
+                      <option key={source} value={source}>
+                        {source}
+                      </option>
+                    ))}
+                  </select>
+                  <strong>{soundSource}</strong>
+                </label>
+                <label>
+                  <span>Session Flow</span>
+                  <strong>{flowLabel}</strong>
+                </label>
+              </div>
+            </div>
+
+            <div className="sk-trackGrid">
+              {TRACKS.map((track) => (
+                <article className={`sk-trackCard ${track.id === selectedTrackId ? "is-selected" : ""}`} key={track.id}>
+                  <div className="sk-trackGlow" style={{ background: `linear-gradient(135deg, ${track.colorA}, ${track.colorB})` }} />
+                  <div className="sk-trackMeta">
+                    <span className="sk-chip">{track.bpm} BPM</span>
+                    <span className="sk-energy">L{track.energy}</span>
+                  </div>
+                  <h3>{track.title}</h3>
+                  <p>{track.artist}</p>
+                  <small>{track.summary}</small>
+                  <div className="sk-actions">
+                    <button
+                      className="sk-button sk-buttonPrimary"
+                      onClick={() => {
+                        startFreshPractice(track.id);
+                      }}
+                      type="button"
+                    >
+                      Start Session
+                    </button>
+                    <button
+                      className="sk-button sk-buttonSecondary"
+                      onClick={() => {
+                        setSelectedTrackId(track.id);
+                        setBpmOverride(null);
+                      }}
+                      type="button"
+                    >
+                      Load Deck
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {(route === "play" || phase !== "IDLE") && route !== "results" && (
+          <section className="sk-playView">
+            <aside className="sk-panel">
+              <span className="sk-eyebrow">Live Session</span>
+              <h2 className="sk-playTitle">Listen first. Then hit the centerline.</h2>
+              <p className="sk-playCopy">
+                The vertical line is the truth. During TAP, you are scored against the nearest target beat in the
+                current pattern. Use the click, pulse glow, and timeline to lock your timing.
+              </p>
+              <div className="sk-sessionStats">
+                <article>
+                  <label>Track</label>
+                  <strong>{selectedTrack.title}</strong>
+                </article>
+                <article>
+                  <label>BPM</label>
+                  <strong>{bpm}</strong>
+                </article>
+                <article>
+                  <label>Phase</label>
+                  <strong>{phaseLabel}</strong>
+                </article>
+                <article>
+                  <label>Pattern</label>
+                  <strong>{patternName}</strong>
+                </article>
+                <article>
+                  <label>Flow</label>
+                  <strong>{flowLabel}</strong>
+                </article>
+                <article>
+                  <label>Sound</label>
+                  <strong>{soundSource}</strong>
+                </article>
+              </div>
+            </aside>
+
+            <section className="sk-gamePanel">
+              <div className="sk-gameTop">
+                <div>
+                  <label>Current Phase</label>
+                  <h2 className={`is-${phaseTone}`}>{phaseLabel}</h2>
+                </div>
+                <div className="sk-streak">
+                  <label>Streak</label>
+                  <strong>{streak}</strong>
+                </div>
+              </div>
+
+              <div className="sk-targetHud">
+                <article>
+                  <label>Click Target</label>
+                  <strong>{patternName}</strong>
+                </article>
+                <article>
+                  <label>Phrase Grid</label>
+                  <strong>{targetPattern.join(" • ")}</strong>
+                </article>
+              </div>
+
+              <div className={`sk-toast is-${toastTone}`}>
+                <span>{currentRating}</span>
+                <small>{currentOffset}</small>
+              </div>
+
+              <div className="sk-stage">
+                <div className="sk-ring sk-ringOuter" />
+                <div className="sk-ring sk-ringMid" />
+                <div className="sk-ring sk-ringInner" />
+                <button
+                  className={`sk-pad ${isBeatActive ? "is-beatActive" : ""} ${isPadPressed ? "is-hit" : ""}`}
+                  disabled={phase !== "TAP"}
+                  onClick={handleTap}
+                  type="button"
+                >
+                  <span>{phase === "GET_READY" ? countdownBeat ?? 4 : "◉"}</span>
+                  <strong>Hit Beat</strong>
+                  <small>
+                    {phase === "LISTEN"
+                      ? "Listen through the loop"
+                      : phase === "GET_READY"
+                        ? "Countdown before four interactive bars"
+                        : phase === "TAP"
+                          ? "Tap across the full phrase"
+                          : "Round complete"}
+                  </small>
+                </button>
+              </div>
+
+              <div className="sk-timeline">
+                <div className="sk-timelineCenter" />
+                {markers.map((marker, index) => (
+                  <span
+                    className={`sk-marker ${marker.target ? "is-target" : ""} ${marker.hit ? "is-hit" : ""}`}
+                    key={`${index}-${marker.left}`}
+                    style={{ left: `${marker.left}%` }}
+                  />
+                ))}
+              </div>
+
+              <div className="sk-gameFooter">
+                <article>
+                  <label>Score</label>
+                  <strong>{score.toLocaleString()}</strong>
+                </article>
+                <article>
+                  <label>Avg Offset</label>
+                  <strong>{averageOffset(history)}ms</strong>
+                </article>
+                <article>
+                  <label>Best Streak</label>
+                  <strong>{bestStreak}</strong>
+                </article>
+              </div>
+
+              <div className="sk-actions">
+                <button className="sk-button sk-buttonPrimary" onClick={restartSession} type="button">Restart Loop</button>
+                <button className="sk-button sk-buttonSecondary" onClick={resetProgress} type="button">Reset Progress</button>
+              </div>
+            </section>
+          </section>
+        )}
+
+        {route === "results" && (
+          <section className="sk-resultsView">
+            <section className="sk-panel sk-resultsHero">
+              <span className="sk-eyebrow">Session Summary</span>
+              <h2>{accuracy >= 94 ? "Level Up!" : accuracy >= 80 ? "Stable Groove" : "Keep Training"}</h2>
+              <p>
+                {accuracy >= 94
+                  ? "You stayed tight enough to promote into the next rhythmic pattern."
+                  : accuracy >= 80
+                    ? "The groove is holding. Another clean round will scale difficulty."
+                    : "The loop is still outrunning your internal clock. Reset and drill the pocket."}
+              </p>
+
+              <div className="sk-resultsStats">
+                <article>
+                  <label>Final Score</label>
+                  <strong>{score.toLocaleString()}</strong>
+                </article>
+                <article>
+                  <label>BPM</label>
+                  <strong>{bpm}</strong>
+                </article>
+                <article>
+                  <label>Accuracy</label>
+                  <strong>{accuracy}%</strong>
+                </article>
+                <article>
+                  <label>Max Streak</label>
+                  <strong>{bestStreak}</strong>
+                </article>
+                <article>
+                  <label>Difficulty</label>
+                  <strong>L{difficulty}</strong>
+                </article>
+              </div>
+
+              <div className="sk-chart">
+                {(history.length ? history.slice(-8) : [35, 60, 30, 85, 42, 70, 26, 48]).map((offset, index) => {
+                  const height = Math.max(18, 100 - Math.min(100, Math.abs(offset) / 1.5));
+                  return <span key={index} style={{ height: `${height}%` }} />;
+                })}
+              </div>
+
+              <div className="sk-actions">
+                <button className="sk-button sk-buttonPrimary" onClick={retryLevel} type="button">Retry</button>
+                <button className="sk-button sk-buttonSecondary" onClick={startNextLevel} type="button">Level Up</button>
+              </div>
+            </section>
+
+            <aside className="sk-panel">
+              <span className="sk-eyebrow">Recent Offsets</span>
+              <h3>Timing trace</h3>
+              <p>{history.length ? history.slice(-10).map(formatOffset).join(" • ") : "No taps recorded yet."}</p>
+              <ul className="sk-rules">
+                <li>Perfect: ±50ms, +1000</li>
+                <li>Great: ±100ms, +500</li>
+                <li>Good: ±150ms, +200</li>
+                <li>Miss: over ±150ms, streak reset</li>
+              </ul>
+            </aside>
+          </section>
+        )}
+      </section>
+    </main>
+  );
+}

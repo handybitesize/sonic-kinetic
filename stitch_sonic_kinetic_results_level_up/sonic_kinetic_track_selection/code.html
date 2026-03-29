@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-fixed-dim": "#c26bff",
+              "error": "#ff6e84",
+              "secondary-fixed-dim": "#00ecec",
+              "surface-container-lowest": "#000000",
+              "primary-fixed": "#cb80ff",
+              "surface-bright": "#2c2b33",
+              "inverse-surface": "#fbf8ff",
+              "outline": "#76747b",
+              "secondary-container": "#006a6a",
+              "surface-container": "#19191f",
+              "inverse-primary": "#9100e0",
+              "on-surface-variant": "#acaab1",
+              "surface-container-highest": "#25252c",
+              "on-primary-fixed": "#000000",
+              "on-tertiary-fixed": "#003e03",
+              "on-secondary": "#005c5c",
+              "tertiary-container": "#59ee50",
+              "outline-variant": "#48474d",
+              "background": "#0e0e13",
+              "error-container": "#a70138",
+              "on-primary-container": "#39005c",
+              "on-secondary-container": "#d9fffe",
+              "surface-container-high": "#1f1f26",
+              "primary-container": "#cb80ff",
+              "surface-dim": "#0e0e13",
+              "surface-variant": "#25252c",
+              "on-tertiary": "#005e07",
+              "on-error": "#490013",
+              "on-tertiary-fixed-variant": "#005f07",
+              "secondary-dim": "#00ecec",
+              "tertiary-dim": "#49e043",
+              "inverse-on-surface": "#55545a",
+              "on-primary-fixed-variant": "#470071",
+              "tertiary-fixed-dim": "#49e043",
+              "error-dim": "#d73357",
+              "tertiary-fixed": "#59ee50",
+              "on-secondary-fixed-variant": "#006666",
+              "primary-dim": "#aa30fa",
+              "on-primary": "#4a0076",
+              "surface": "#0e0e13",
+              "secondary": "#00fbfb",
+              "secondary-fixed": "#00fbfb",
+              "on-error-container": "#ffb2b9",
+              "on-surface": "#f8f5fd",
+              "on-secondary-fixed": "#004747",
+              "on-tertiary-container": "#005406",
+              "surface-tint": "#d394ff",
+              "primary": "#d394ff",
+              "tertiary": "#69fd5d",
+              "surface-container-low": "#131318",
+              "on-background": "#f8f5fd"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(31, 31, 38, 0.6);
+        backdrop-filter: blur(12px);
+      }
+      .neon-glow-primary:hover {
+        box-shadow: 0 0 15px rgba(211, 148, 255, 0.4);
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0e0e13;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #25252c;
+        border-radius: 10px;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0e0e13]/80 backdrop-blur-xl shadow-[0_0_15px_rgba(211,148,255,0.1)]">
+<div class="flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d394ff] to-[#cb80ff] font-headline tracking-tight">Sonic Kinetic</span>
+</div>
+<nav class="hidden md:flex items-center gap-8 font-label text-sm font-bold uppercase tracking-widest">
+<a class="text-[#f8f5fd]/60 hover:text-[#00fbfb] transition-colors duration-300" href="#">Home</a>
+<a class="text-[#d394ff] hover:text-[#00fbfb] transition-colors duration-300" href="#">Tracks</a>
+<a class="text-[#f8f5fd]/60 hover:text-[#00fbfb] transition-colors duration-300" href="#">Play</a>
+<a class="text-[#f8f5fd]/60 hover:text-[#00fbfb] transition-colors duration-300" href="#">Stats</a>
+</nav>
+<div class="flex items-center gap-4 text-[#d394ff]">
+<button class="material-symbols-outlined p-2 hover:bg-surface-variant rounded-full transition-all active:scale-95">settings</button>
+<button class="material-symbols-outlined p-2 hover:bg-surface-variant rounded-full transition-all active:scale-95">account_circle</button>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto">
+<!-- Header Section -->
+<div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="font-headline text-5xl font-black tracking-tighter mb-2">Available <span class="text-secondary">Tracks</span></h1>
+<p class="text-on-surface-variant font-medium">Select your soundscape and master the kinetic flow.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low p-1 rounded-2xl">
+<button class="px-6 py-2 rounded-xl bg-surface-container-high text-primary font-bold text-xs uppercase tracking-widest transition-all">All Genres</button>
+<button class="px-6 py-2 rounded-xl text-on-surface-variant hover:text-on-surface font-bold text-xs uppercase tracking-widest transition-all">Electronic</button>
+<button class="px-6 py-2 rounded-xl text-on-surface-variant hover:text-on-surface font-bold text-xs uppercase tracking-widest transition-all">Synthwave</button>
+</div>
+</div>
+<!-- Bento Grid Tracks -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Track Card 1: Active -->
+<div class="group relative bg-surface-container-high rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent opacity-60"></div>
+<div class="aspect-square w-full relative overflow-hidden">
+<img alt="Cybernetic Pulse" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Abstract vibrant 3D rendering of digital sound waves in neon purple and cyan against a dark tech background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8SvyGse5xzhhk1DhKi5FBfW_JcR75sIaf4dkALH7JjmuBQfXUCMECUzUZeAu705OYTvvbdkpIY76MNSv_w4_aASMY9sejDkNjP1najpNrNnqpX-d2Oj4XCYDigeCIZjBLcFPczW5NlUzn9obHWcKmiOjQqz-J__l0SyK_HFvkjAGmJBkQyErH1n70FkGrsF2jJRPExSDLpt1del16mZn1XSr5FZxRFg7xqPXAnISAOeya0hGx-zkqCmEbAzvhgDYOPvgXEFnwHmo"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-surface/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span> 128 BPM
+                        </span>
+</div>
+</div>
+<div class="p-6 relative">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline text-xl font-bold text-on-surface leading-tight">Cybernetic Pulse</h3>
+<p class="text-on-surface-variant text-sm font-medium">Hyper-Glitch Unit</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Level</span>
+<div class="flex gap-1">
+<div class="w-4 h-1 rounded-full bg-tertiary"></div>
+<div class="w-4 h-1 rounded-full bg-surface-variant"></div>
+<div class="w-4 h-1 rounded-full bg-surface-variant"></div>
+</div>
+</div>
+</div>
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-black py-4 rounded-2xl uppercase tracking-tighter transition-all active:scale-95 neon-glow-primary flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        Start Session
+                    </button>
+</div>
+</div>
+<!-- Track Card 2: Active -->
+<div class="group relative bg-surface-container-high rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent opacity-60"></div>
+<div class="aspect-square w-full relative overflow-hidden">
+<img alt="Neon Horizon" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Cinematic night cityscape with glowing neon lights and long exposure light trails in shades of pink and orange" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgdoP9PvBxH_4GFUfESyb7U4skjwiEiX2P3pPd82vT34Ee4X_Uot2uwwBb1KOiyQnBXijiWJq7OVeF4m0-RkOJ6CxQw-YwzYfnrMG3W1vr-oiHwafHUueIr0rWadCkden4TckAP-y32JMQdyeHO9dO5ngYYnPXtkQnQmGPWJIGUkP9K9SK7iXSSo3_5bDpYB2NDx3zdr1ydcUjSSAMUA8IHZUqiflHwAATpJesHkP9q37aDrJ5iFQnmpOe0EEOyDkr4Wuxczqpihc"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-surface/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 142 BPM
+                        </span>
+</div>
+</div>
+<div class="p-6 relative">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline text-xl font-bold text-on-surface leading-tight">Neon Horizon</h3>
+<p class="text-on-surface-variant text-sm font-medium">Retro-Future Syndicate</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Level</span>
+<div class="flex gap-1">
+<div class="w-4 h-1 rounded-full bg-tertiary"></div>
+<div class="w-4 h-1 rounded-full bg-tertiary"></div>
+<div class="w-4 h-1 rounded-full bg-surface-variant"></div>
+</div>
+</div>
+</div>
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-black py-4 rounded-2xl uppercase tracking-tighter transition-all active:scale-95 neon-glow-primary flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        Start Session
+                    </button>
+</div>
+</div>
+<!-- Track Card 3: Locked -->
+<div class="group relative bg-surface-container rounded-3xl overflow-hidden transition-all duration-300 border border-outline-variant/10">
+<div class="absolute inset-0 bg-surface-container-lowest/40 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-4 group-hover:backdrop-blur-none transition-all duration-500">
+<div class="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-3xl">lock</span>
+</div>
+<span class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40 group-hover:text-on-surface transition-colors">Unlock at Rank 5</span>
+</div>
+<div class="aspect-square w-full relative overflow-hidden grayscale opacity-40">
+<img alt="Void Walker" class="w-full h-full object-cover" data-alt="Deep blue and black abstract gradient with geometric light patterns and cosmic dust particles" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ-7UNYwaUONuzEvtTrRZjK_217nGLEynIbnbgFrG3MoHf3X3sCqvOT8bQWnyfJqKCvBIMDPH8O1nmrIBmPe500GoX4mEFXNz7EF4XyZoaRK8CSbm3yHjL1Ji0W2E51JM8pD43pKRdJVlICqxgVZuIssDRosACh8-yKU4MzMl4muo-wrb4nKUzhzUAJDFGNO505O_QNmHVHGbvTvC31WGCHlSdt0aJpuTer8MJ2SMRzbUQfJ7kLZy53oOkU2DujOBnWCbLOXEwcxs"/>
+</div>
+<div class="p-6 relative opacity-40">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline text-xl font-bold text-on-surface leading-tight">Void Walker</h3>
+<p class="text-on-surface-variant text-sm font-medium">Dark Matter Echo</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Level</span>
+<div class="flex gap-1">
+<div class="w-4 h-1 rounded-full bg-error"></div>
+<div class="w-4 h-1 rounded-full bg-error"></div>
+<div class="w-4 h-1 rounded-full bg-error"></div>
+</div>
+</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface-variant/30 font-black py-4 rounded-2xl uppercase tracking-tighter cursor-not-allowed" disabled="">
+                        Locked
+                    </button>
+</div>
+</div>
+<!-- Track Card 4: Active -->
+<div class="group relative bg-surface-container-high rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent opacity-60"></div>
+<div class="aspect-square w-full relative overflow-hidden">
+<img alt="Kinetic Flow" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Dynamic explosion of colored light particles in lime green and electric blue against a pitch black background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcpPSXTPdpsOIAgYyZzw4LHqX6dJFtaZelNeMvwVoOi-TfBNSiiwxZi65bNktZWcGYS62FWYZblLXGeNQqzBf-ag9syWKtQdz-ljj1bfI9tfI7Lbmp5KuOs3TYS3JVrugpVxMYddbVcZLnVS3B_Ya_HlIj7AfSMFsA0639CMwxCU9c0jaTQGJtJ_SdaAlRq_lLvVgXIOP06ccSjsmaFVwPi07Toh3SQJtnoky8DV8ZFetdrE6K4OzJ6lTkcK5Vua7ykAHHC2KFfEU"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-surface/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 110 BPM
+                        </span>
+</div>
+</div>
+<div class="p-6 relative">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline text-xl font-bold text-on-surface leading-tight">Kinetic Flow</h3>
+<p class="text-on-surface-variant text-sm font-medium">Velocity Zero</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Level</span>
+<div class="flex gap-1">
+<div class="w-4 h-1 rounded-full bg-tertiary"></div>
+<div class="w-4 h-1 rounded-full bg-surface-variant"></div>
+<div class="w-4 h-1 rounded-full bg-surface-variant"></div>
+</div>
+</div>
+</div>
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-black py-4 rounded-2xl uppercase tracking-tighter transition-all active:scale-95 neon-glow-primary flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        Start Session
+                    </button>
+</div>
+</div>
+<!-- Track Card 5: Active (Featured/Wide) -->
+<div class="md:col-span-2 group relative bg-surface-container-high rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest via-surface-container-high/40 to-transparent z-10 pointer-events-none"></div>
+<div class="flex flex-col md:flex-row h-full">
+<div class="w-full md:w-1/2 relative overflow-hidden h-64 md:h-auto">
+<img alt="Sublime Bass" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Professional DJ mixer close-up with glowing faders and knobs in a dark smoky club environment with purple backlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUnQed9UfHCxJOQIp8fSamUgZ0GJ0fYigu0eH-V43ONSN037ZEr5v6ohRwxnFw4XeUikS7UH7y7C2oK4lETyx5cTGF3PiWaZP9aR-HXT3aDAqRWS9mhNeDO0uTzfhUnhNXDfnHWDr-ov2U6xLuHruthuqIarw24Nr8hPJk99Q1p4zIL3NVwr3eRWx629yIg6cFdEAJfSXegSvU-O2Iqk5nNd6xZUphzmzEcwoOpSbfoWfGsDZZqyyOeiTpodXuuq7vSwyMdCcQB5s"/>
+<div class="absolute top-4 left-4 z-20">
+<span class="bg-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-on-primary-fixed">Featured Track</span>
+</div>
+</div>
+<div class="w-full md:w-1/2 p-8 relative z-20 flex flex-col justify-center">
+<div class="flex gap-2 mb-4">
+<span class="text-[10px] font-black uppercase tracking-widest text-secondary border border-secondary/30 px-3 py-1 rounded-full">136 BPM</span>
+<span class="text-[10px] font-black uppercase tracking-widest text-tertiary border border-tertiary/30 px-3 py-1 rounded-full">Master Level</span>
+</div>
+<h3 class="font-headline text-3xl font-black text-on-surface mb-2 tracking-tight">Sublime Bass Theory</h3>
+<p class="text-on-surface-variant text-base mb-8 leading-relaxed">The ultimate challenge in kinetic coordination. Push your reflexes to the absolute limit with high-velocity pulse sequences.</p>
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-black py-4 rounded-2xl uppercase tracking-tighter transition-all active:scale-95 neon-glow-primary flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                            Engage Master Mode
+                        </button>
+</div>
+</div>
+</div>
+<!-- Track Card 6: Locked -->
+<div class="group relative bg-surface-container rounded-3xl overflow-hidden transition-all duration-300 border border-outline-variant/10">
+<div class="absolute inset-0 bg-surface-container-lowest/40 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-4 group-hover:backdrop-blur-none transition-all duration-500">
+<div class="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-3xl">lock</span>
+</div>
+<span class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40 group-hover:text-on-surface transition-colors">Complete 'Neon Horizon'</span>
+</div>
+<div class="aspect-square w-full relative overflow-hidden grayscale opacity-40">
+<img alt="Solaris Flare" class="w-full h-full object-cover" data-alt="Warm golden and orange light leaks and lens flares creating an ethereal glowing atmosphere on a dark canvas" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkAWJYp_Yu8ag6JfAy9gfYJ9l11naR4GY2mI2DJOuTQOVIywK-fKIMfElgDawci6faw6iKi_AAiy_SZIrXa41F44YOAbeYKNtktBt05N9ulrtgZ4nzPD2sm2I3xojXEtupxG_gc99G-BzhhPgRH11p3ihQbQhIFeoD3G-Gdq2yqhQgPNR-XWfLuxeldGwz6af2uCqgg489z3nUayOtYsPkQOU5W-6KIoQ556Kc63IvNPbjV-X-UVZoLXRrGB-2LXXWo4iKYyzjsy4"/>
+</div>
+<div class="p-6 relative opacity-40">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline text-xl font-bold text-on-surface leading-tight">Solaris Flare</h3>
+<p class="text-on-surface-variant text-sm font-medium">Radiant Audio</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Level</span>
+<div class="flex gap-1">
+<div class="w-4 h-1 rounded-full bg-tertiary"></div>
+<div class="w-4 h-1 rounded-full bg-tertiary"></div>
+<div class="w-4 h-1 rounded-full bg-surface-variant"></div>
+</div>
+</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface-variant/30 font-black py-4 rounded-2xl uppercase tracking-tighter cursor-not-allowed" disabled="">
+                        Locked
+                    </button>
+</div>
+</div>
+<!-- Track Card 7: Active -->
+<div class="group relative bg-surface-container-high rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent opacity-60"></div>
+<div class="aspect-square w-full relative overflow-hidden">
+<img alt="Prism Break" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Symmetry of neon geometric shapes and glass reflections with iridescent colors and deep shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaYwkkwJLt4Ux7Sxqp5Bo_3k82daip_WHbeANMIzVQza5oF6IJfYrKfZY9jxYCMOx8wCBSp3RFA9dDE-JfHddc4oGUTPfooTzeaDNVpgPPx6k3aWN_gsg_K1mvVA50l80tLVmSH6NFj6675UxGd3q9LNeIsnqTieCYdpXGxRS8G7n8PuyRJumtWgh0WzdRs-doVRvXmZibKWLPDK2TuEnIUPmYiNnRoQs_Ee5HurzKj92i5JcaxNYqVtzddjI3BBnEFv_9vEFcHwg"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-surface/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 150 BPM
+                        </span>
+</div>
+</div>
+<div class="p-6 relative">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline text-xl font-bold text-on-surface leading-tight">Prism Break</h3>
+<p class="text-on-surface-variant text-sm font-medium">Crystal Resonance</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Level</span>
+<div class="flex gap-1">
+<div class="w-4 h-1 rounded-full bg-error"></div>
+<div class="w-4 h-1 rounded-full bg-error"></div>
+<div class="w-4 h-1 rounded-full bg-error"></div>
+</div>
+</div>
+</div>
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-black py-4 rounded-2xl uppercase tracking-tighter transition-all active:scale-95 neon-glow-primary flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        Start Session
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 rounded-t-[2rem] bg-[#131318]/90 backdrop-blur-2xl border-t border-[#48474d]/15 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+<div class="flex justify-around items-center px-4 pb-6 pt-2 h-20">
+<button class="flex flex-col items-center justify-center text-[#f8f5fd]/40 py-2 px-4 hover:text-[#00fbfb] transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-widest mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#d394ff] bg-[#1f1f26] rounded-2xl py-2 px-6 shadow-[0_0_10px_rgba(211,148,255,0.2)] transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">library_music</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-widest mt-1">Tracks</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#f8f5fd]/40 py-2 px-4 hover:text-[#00fbfb] transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined">graphic_eq</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-widest mt-1">Play</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#f8f5fd]/40 py-2 px-4 hover:text-[#00fbfb] transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-widest mt-1">Stats</span>
+</button>
+</div>
+</nav>
+</body></html>

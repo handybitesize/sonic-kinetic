@@ -1,0 +1,54 @@
+# Master Prompt for Gemini: Build 'Sonic Kinetic' Rhythm Game
+
+Use the following detailed instructions to generate the React/Next.js and Tailwind CSS code for the "Sonic Kinetic" DJ training app.
+
+## 1. Context & Vision
+"Sonic Kinetic" is a high-fidelity rhythm training app for DJs. The core gameplay loop involves:
+1. **Listen Phase:** User listens to a 4-bar loop (e.g., at 128 BPM).
+2. **Tap Phase:** User must tap the central 'HIT BEAT' trigger in sync with the beat they just heard.
+3. **Scoring:** Accuracy is measured in milliseconds (ms) from the true beat.
+4. **Progression:** Success increases the 'Streak' and eventually scales difficulty (adding off-beats or faster BPM).
+
+## 2. Technical Stack
+- **Framework:** React or Next.js
+- **Styling:** Tailwind CSS (Dark Mode)
+- **Audio:** Web Audio API or Howler.js for low-latency playback and timing.
+
+## 3. Visual Reference (Tailwind Context)
+The UI uses a 'Sonic Kinetic' design system:
+- **Background:** Dark Charcoal (`#0e0e13`)
+- **Primary Accent:** Neon Purple/Lavender (`#d394ff`)
+- **Secondary Accent:** Cyan/Electric Blue (`#00fbfb`)
+- **Success State:** Neon Green (`#22c55e`)
+- **Typography:** Space Grotesk (Bold/Black for headings)
+
+## 4. Coding Task: The Core Gameplay Container
+"Gemini, please generate a React component named `SonicKineticGame` that implements the following logic:
+
+### A. State Management
+- `phase`: 'LISTEN' | 'TAP' | 'RESULTS'
+- `bpm`: Number (default 128)
+- `streak`: Number
+- `accuracy`: Array of ms offsets
+- `isBeatActive`: Boolean (for visual pulse)
+
+### B. The Rhythm Engine
+- Create a `useEffect` that uses `requestAnimationFrame` or a precise `setInterval` to track the 'current beat' based on a start time and BPM.
+- Trigger a visual pulse (`isBeatActive`) on every quarter note.
+
+### C. Input & Scoring Logic
+- Create a `handleTap` function. 
+- Calculate the difference between `performance.now()` and the `closestBeatTime`.
+- **Scoring Thresholds:**
+    - < 50ms: 'PERFECT' (+1000 pts, increment streak)
+    - < 100ms: 'GREAT' (+500 pts)
+    - < 150ms: 'GOOD' (+200 pts)
+    - > 150ms: 'MISS' (reset streak)
+
+### D. The UI Structure (Tailwind)
+- Use a full-screen dark container.
+- **Header:** Display 'STREAK' and 'CURRENT PHASE' using large, bold typography.
+- **Center:** A large, circular pulse button (`#d394ff`) that scales/glows when `isBeatActive` is true.
+- **Footer:** A scrolling 'Timeline' or progress bar showing the beat markers moving from right to left.
+
+Please provide the complete code, including the custom hook for the audio timing logic."

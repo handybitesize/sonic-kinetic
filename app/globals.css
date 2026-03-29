@@ -1,0 +1,806 @@
+:root {
+  --bg: #0e0e13;
+  --surface-low: #131318;
+  --surface-mid: #19191f;
+  --surface-high: #1f1f26;
+  --surface-variant: #25252c;
+  --surface-bright: #2c2b33;
+  --text: #f8f5fd;
+  --muted: #acaab1;
+  --primary: #d394ff;
+  --primary-dim: #aa30fa;
+  --secondary: #00fbfb;
+  --secondary-dim: #00ecec;
+  --tertiary: #69fd5d;
+  --error: #ff6e84;
+  --panel: rgba(25, 25, 31, 0.72);
+  --ghost: rgba(72, 71, 77, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(211, 148, 255, 0.17), transparent 28%),
+    radial-gradient(circle at 83% 28%, rgba(0, 251, 251, 0.12), transparent 22%),
+    radial-gradient(circle at 48% 108%, rgba(105, 253, 93, 0.08), transparent 20%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.sk-app {
+  min-height: 100vh;
+  padding: 84px 20px 28px;
+}
+
+.sk-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  padding: 0 20px;
+  background: rgba(14, 14, 19, 0.8);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 18px rgba(211, 148, 255, 0.08);
+}
+
+.sk-brand,
+.sk-copy h1,
+.sk-panel h2,
+.sk-panel h3,
+.sk-trackCard h3,
+.sk-gameTop h2,
+.sk-streak strong,
+.sk-pad strong,
+.sk-resultsStats strong,
+.sk-sessionStats strong,
+.sk-gameFooter strong,
+.sk-heroStats strong {
+  font-family: var(--font-display), sans-serif;
+}
+
+.sk-brand {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  background-image: linear-gradient(135deg, var(--primary), #cb80ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.sk-topbarMeta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sk-chip,
+.sk-status,
+.sk-eyebrow,
+.sk-nav button,
+.sk-trackMeta span,
+.sk-gameTop label,
+.sk-streak label,
+.sk-sessionStats label,
+.sk-gameFooter label,
+.sk-resultsStats label,
+.sk-heroStats label,
+.sk-toast small {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.sk-chip,
+.sk-status,
+.sk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(31, 31, 38, 0.9);
+}
+
+.sk-status.is-ready {
+  color: var(--secondary);
+  box-shadow: 0 0 16px rgba(0, 251, 251, 0.16);
+}
+
+.sk-shell {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+}
+
+.sk-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sk-nav button,
+.sk-button {
+  border: 0;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.sk-nav button {
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: transparent;
+  color: rgba(248, 245, 253, 0.45);
+}
+
+.sk-nav button.is-active {
+  color: var(--primary);
+  background: var(--surface-high);
+  box-shadow: 0 0 16px rgba(211, 148, 255, 0.12);
+}
+
+.sk-hero,
+.sk-tracksView,
+.sk-playView,
+.sk-resultsView {
+  display: grid;
+  gap: 24px;
+}
+
+.sk-hero {
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  min-height: calc(100vh - 180px);
+}
+
+.sk-copy h1 {
+  margin: 18px 0 12px;
+  font-size: clamp(3.2rem, 8vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+}
+
+.sk-copy h1 span,
+.sk-panel h2 span {
+  color: transparent;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.sk-copy p,
+.sk-panel p,
+.sk-trackCard p,
+.sk-trackCard small,
+.sk-rules,
+.sk-rules li {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.sk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.sk-button {
+  padding: 15px 22px;
+  border-radius: 999px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+}
+
+.sk-button:hover,
+.sk-trackCard:hover,
+.sk-pad:hover {
+  transform: translateY(-2px);
+}
+
+.sk-buttonPrimary {
+  color: #200a2d;
+  background: linear-gradient(135deg, var(--primary), #cb80ff);
+  box-shadow: 0 0 26px rgba(211, 148, 255, 0.22);
+}
+
+.sk-buttonSecondary {
+  color: var(--text);
+  background: var(--surface-high);
+}
+
+.sk-panel,
+.sk-visualPanel,
+.sk-trackCard,
+.sk-gamePanel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+}
+
+.sk-panel,
+.sk-gamePanel {
+  padding: 24px;
+}
+
+.sk-panel h2,
+.sk-resultsHero h2 {
+  margin: 12px 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.06em;
+}
+
+.sk-visualPanel {
+  min-height: 520px;
+  padding: 28px;
+  box-shadow: 0 0 40px rgba(211, 148, 255, 0.14);
+}
+
+.sk-waveform {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  min-height: 280px;
+}
+
+.sk-waveform span,
+.sk-chart span {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--primary), rgba(0, 251, 251, 0.28));
+  width: 22px;
+}
+
+.sk-heroStats,
+.sk-sessionStats,
+.sk-gameFooter,
+.sk-resultsStats,
+.sk-targetHud {
+  display: grid;
+  gap: 16px;
+}
+
+.sk-heroStats {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 28px;
+}
+
+.sk-heroStats article,
+.sk-targetHud article,
+.sk-sessionStats article,
+.sk-gameFooter article,
+.sk-resultsStats article {
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(19, 19, 24, 0.92);
+}
+
+.sk-heroStats strong,
+.sk-targetHud strong,
+.sk-sessionStats strong,
+.sk-gameFooter strong,
+.sk-resultsStats strong {
+  display: block;
+  margin-top: 14px;
+  font-size: clamp(1.4rem, 2vw, 2.2rem);
+  letter-spacing: -0.05em;
+}
+
+.sk-tracksView,
+.sk-playView,
+.sk-resultsView {
+  grid-template-columns: 0.88fr 1.12fr;
+}
+
+.sk-playView > .sk-panel {
+  order: 2;
+}
+
+.sk-playView > .sk-gamePanel {
+  order: 1;
+}
+
+.sk-settings {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.sk-settings label {
+  display: grid;
+  gap: 10px;
+}
+
+.sk-select {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: var(--text);
+  background: rgba(19, 19, 24, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(72, 71, 77, 0.18);
+}
+
+.sk-settings span {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.sk-settings strong {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.8rem;
+}
+
+.sk-trackGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.sk-trackCard {
+  padding: 24px;
+}
+
+.sk-trackCard.is-selected {
+  box-shadow: 0 0 28px rgba(211, 148, 255, 0.22);
+}
+
+.sk-trackGlow {
+  position: absolute;
+  inset: auto -20% 60% auto;
+  width: 260px;
+  height: 260px;
+  opacity: 0.22;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.sk-trackMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sk-energy {
+  color: var(--tertiary);
+}
+
+.sk-trackCard h3 {
+  margin: 18px 0 6px;
+  font-size: 1.6rem;
+}
+
+.sk-gamePanel {
+  min-height: 760px;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(211, 148, 255, 0.12), transparent 32%),
+    rgba(19, 19, 24, 0.94);
+}
+
+.sk-gameTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.sk-gameTop h2 {
+  margin: 10px 0 0;
+  font-size: clamp(2.4rem, 4vw, 4rem);
+}
+
+.sk-gameTop h2.is-listen {
+  color: var(--secondary);
+}
+
+.sk-gameTop h2.is-tap {
+  color: var(--primary);
+}
+
+.sk-gameTop h2.is-get_ready {
+  color: #cb80ff;
+}
+
+.sk-gameTop h2.is-results {
+  color: var(--tertiary);
+}
+
+.sk-targetHud {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 18px;
+}
+
+.sk-targetHud strong {
+  font-size: clamp(1rem, 1.7vw, 1.5rem);
+  line-height: 1.2;
+}
+
+.sk-streak {
+  text-align: right;
+}
+
+.sk-streak strong {
+  display: block;
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  color: var(--tertiary);
+  letter-spacing: -0.08em;
+}
+
+.sk-toast {
+  width: fit-content;
+  margin: 24px auto 0;
+  min-width: 200px;
+  padding: 14px 22px;
+  text-align: center;
+  border-radius: 999px;
+  background: rgba(31, 31, 38, 0.96);
+}
+
+.sk-toast span {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.22em;
+}
+
+.sk-toast.is-perfect {
+  color: var(--tertiary);
+}
+
+.sk-toast.is-great {
+  color: var(--secondary);
+}
+
+.sk-toast.is-good {
+  color: var(--primary);
+}
+
+.sk-toast.is-get-ready,
+.sk-toast.is-ready {
+  color: var(--secondary);
+}
+
+.sk-toast.is-miss {
+  color: var(--error);
+}
+
+.sk-stage {
+  position: relative;
+  min-height: 390px;
+  display: grid;
+  place-items: center;
+}
+
+.sk-ring {
+  position: absolute;
+  border-radius: 999px;
+  border: 2px solid rgba(211, 148, 255, 0.16);
+}
+
+.sk-ringOuter {
+  width: 500px;
+  height: 500px;
+  border-color: rgba(105, 253, 93, 0.08);
+}
+
+.sk-ringMid {
+  width: 410px;
+  height: 410px;
+  border-color: rgba(0, 251, 251, 0.1);
+}
+
+.sk-ringInner {
+  width: 330px;
+  height: 330px;
+}
+
+.sk-pad {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  width: min(54vw, 270px);
+  height: min(54vw, 270px);
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+  box-shadow: 0 0 56px rgba(211, 148, 255, 0.18);
+  transition: transform 90ms ease, box-shadow 140ms ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.sk-pad::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px);
+}
+
+.sk-pad > * {
+  position: relative;
+}
+
+.sk-pad span {
+  font-size: 3.2rem;
+}
+
+.sk-pad strong {
+  font-size: 0.94rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.sk-pad small {
+  color: rgba(248, 245, 253, 0.7);
+}
+
+.sk-pad.is-beatActive {
+  transform: scale(1.04);
+  box-shadow: 0 0 74px rgba(211, 148, 255, 0.34), 0 0 28px rgba(0, 251, 251, 0.16);
+}
+
+.sk-pad.is-hit {
+  transform: scale(0.94);
+}
+
+.sk-pad:disabled {
+  opacity: 0.84;
+}
+
+.sk-pad:focus,
+.sk-pad:focus-visible,
+.sk-pad:active {
+  outline: none;
+}
+
+.sk-pad::-moz-focus-inner {
+  border: 0;
+}
+
+.sk-timeline {
+  position: relative;
+  height: 76px;
+  margin-top: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(14, 14, 19, 0.86);
+}
+
+.sk-timelineCenter {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--secondary), var(--primary));
+}
+
+.sk-marker {
+  position: absolute;
+  top: 14px;
+  width: 10px;
+  height: 48px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: rgba(211, 148, 255, 0.88);
+}
+
+.sk-marker.is-target {
+  background: var(--secondary);
+  box-shadow: 0 0 16px rgba(0, 251, 251, 0.34);
+}
+
+.sk-marker.is-hit {
+  background: var(--tertiary);
+  box-shadow: 0 0 16px rgba(105, 253, 93, 0.34);
+}
+
+.sk-gameFooter,
+.sk-sessionStats,
+.sk-resultsStats {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 24px;
+}
+
+.sk-resultsView {
+  align-items: start;
+}
+
+.sk-resultsHero {
+  min-height: 100%;
+}
+
+.sk-chart {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: flex-end;
+  gap: 10px;
+  min-height: 220px;
+  margin-top: 22px;
+}
+
+.sk-rules {
+  margin: 18px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 1100px) {
+  .sk-hero,
+  .sk-tracksView,
+  .sk-playView,
+  .sk-resultsView {
+    grid-template-columns: 1fr;
+  }
+
+  .sk-trackGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .sk-app {
+    padding: 84px 14px 20px;
+  }
+
+  .sk-topbar {
+    padding: 0 14px;
+  }
+
+  .sk-topbarMeta {
+    gap: 8px;
+  }
+
+  .sk-topbarMeta .sk-chip,
+  .sk-topbarMeta .sk-status {
+    padding: 8px 10px;
+    font-size: 0.64rem;
+  }
+
+  .sk-heroStats,
+  .sk-targetHud,
+  .sk-sessionStats,
+  .sk-gameFooter,
+  .sk-resultsStats {
+    grid-template-columns: 1fr;
+  }
+
+  .sk-gameTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .sk-streak {
+    text-align: left;
+  }
+
+  .sk-panel,
+  .sk-gamePanel {
+    padding: 18px;
+  }
+
+  .sk-playTitle {
+    display: none;
+  }
+
+  .sk-playCopy {
+    display: none;
+  }
+
+  .sk-sessionStats {
+    margin-top: 12px;
+    gap: 10px;
+  }
+
+  .sk-sessionStats article,
+  .sk-targetHud article,
+  .sk-gameFooter article {
+    padding: 14px;
+  }
+
+  .sk-select {
+    padding: 12px 14px;
+  }
+
+  .sk-sessionStats strong,
+  .sk-targetHud strong,
+  .sk-gameFooter strong {
+    margin-top: 10px;
+    font-size: 1.05rem;
+  }
+
+  .sk-targetHud {
+    margin-top: 14px;
+    gap: 10px;
+  }
+
+  .sk-toast {
+    margin-top: 16px;
+    min-width: 170px;
+    padding: 12px 16px;
+  }
+
+  .sk-stage {
+    min-height: 250px;
+  }
+
+  .sk-ringOuter {
+    width: 360px;
+    height: 360px;
+  }
+
+  .sk-ringMid {
+    width: 300px;
+    height: 300px;
+  }
+
+  .sk-ringInner {
+    width: 240px;
+    height: 240px;
+  }
+
+  .sk-pad {
+    width: min(50vw, 210px);
+    height: min(50vw, 210px);
+    gap: 4px;
+  }
+
+  .sk-pad span {
+    font-size: 2.5rem;
+  }
+
+  .sk-pad strong {
+    font-size: 0.82rem;
+    letter-spacing: 0.16em;
+  }
+
+  .sk-pad small {
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  .sk-timeline {
+    height: 60px;
+  }
+
+  .sk-marker {
+    top: 10px;
+    height: 40px;
+  }
+}

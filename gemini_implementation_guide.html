@@ -1,0 +1,37 @@
+# Gemini Implementation Guide: Sonic Kinetic Rhythm Game
+
+This document provides structured instructions and context for Gemini (or any LLM) to generate the core game logic for the "Sonic Kinetic" DJ training app based on the provided UI designs.
+
+## 1. Project Overview
+- **Product Name:** Sonic Kinetic
+- **Core Loop:** Listen to a track section (4-8 bars) -> Tap along to the beat in the next loop -> Score based on accuracy -> Repeat with increasing difficulty.
+- **Tech Stack Recommendation:** React or Next.js with Tailwind CSS (matching the provided UI code). Use the `Web Audio API` or `Howler.js` for low-latency audio.
+
+## 2. Global State Requirements
+Gemini should help you implement a state machine that tracks:
+- `gameStatus`: ['IDLE', 'LISTENING', 'TAPPING', 'RESULTS']
+- `currentBPM`: (e.g., 128)
+- `currentStreak`: Integer
+- `accuracyHistory`: Array of timing offsets (ms)
+- `difficultyLevel`: [1, 2, 3...] (affects timing windows and pattern complexity)
+
+## 3. Specific Implementation Prompts for Gemini
+
+### Prompt A: The Audio Sync Engine
+> "Gemini, I have a Tailwind CSS UI for a rhythm game. I need a React hook called `useRhythmEngine` that synchronizes a playing audio file with a visual beat indicator. It needs to calculate the 'current beat' based on the `audioContext.currentTime` and a given BPM. Provide the logic to trigger a visual 'pulse' event every beat."
+
+### Prompt B: Input Detection & Scoring
+> "Gemini, create a function `calculateHitAccuracy(tapTime, targetBeatTime, bpm)` that returns a score ('PERFECT', 'GREAT', 'GOOD', 'MISS') based on how close a user tap is to the actual beat. Define the timing windows: Perfect is ±50ms, Great is ±100ms, Good is ±150ms."
+
+### Prompt C: Difficulty Scaling Logic
+> "Gemini, write a function that increases game difficulty after 3 successful 8-bar loops. Level 1: Tap every downbeat. Level 2: Tap every beat. Level 3: Add off-beat 'syncopated' taps. Return the new `targetPattern` array for the 'TAPPING' phase."
+
+## 4. Asset Integration
+- **Images:** Use the background and character assets extracted in the 'Assets' folder.
+- **CSS:** Use the Tailwind classes provided in the 'View Code' section of the screens.
+- **Icons:** The UI uses standard Lucide/Material icons which can be imported via your preferred icon library.
+
+## 5. Next Steps
+1. Create a new React/Next.js project.
+2. Copy the HTML/Tailwind code from the **Sonic Kinetic: Gameplay** screen.
+3. Use the prompts above with Gemini to generate the `GameContainer.js` logic.
