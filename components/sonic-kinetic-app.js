@@ -42,6 +42,7 @@ const WINDOWS = [
 ];
 const MAX_HIT_WINDOW_MS = 150;
 const SOUND_SOURCES = ["Click", "Kick", "Snare", "Hi-Hat", "Drum Kit"];
+const TEST_LEVELS = [1, 2, 3, 4, 5];
 
 function getPattern(level) {
   if (level <= 1) return [0, 1, 2, 3, 4, 5, 6, 7];
@@ -92,6 +93,45 @@ function formatOffset(value) {
 function accuracyRate(history) {
   if (!history.length) return 0;
   return Math.max(0, Math.min(100, Math.round(100 - (averageOffset(history) / 150) * 100)));
+}
+
+function buildTraceSeries(trace, width, height, maxOffset = 150) {
+  if (!trace.length) {
+    return { lineSegments: [], hitDots: [], missMarkers: [] };
+  }
+
+  const centerY = height / 2;
+  const amplitude = height / 2 - 12;
+  const stepX = trace.length > 1 ? width / (trace.length - 1) : width / 2;
+  const lineSegments = [];
+  const hitDots = [];
+  const missMarkers = [];
+  let currentSegment = [];
+
+  for (let index = 0; index < trace.length; index += 1) {
+    const entry = trace[index];
+    const x = trace.length > 1 ? index * stepX : width / 2;
+
+    if (!entry.success) {
+      if (currentSegment.length) {
+        lineSegments.push(currentSegment.join(" "));
+        currentSegment = [];
+      }
+      missMarkers.push({ x, y: centerY });
+      continue;
+    }
+
+    const clamped = Math.max(-maxOffset, Math.min(maxOffset, entry.offset));
+    const y = centerY - (clamped / maxOffset) * amplitude;
+    currentSegment.push(`${x},${y}`);
+    hitDots.push({ x, y, key: `${entry.absoluteBeat}-${entry.offset}` });
+  }
+
+  if (currentSegment.length) {
+    lineSegments.push(currentSegment.join(" "));
+  }
+
+  return { lineSegments, hitDots, missMarkers };
 }
 
 function getPatternForSession(level) {
@@ -153,7 +193,9 @@ export default function SonicKineticApp() {
   const [selectedTrackId, setSelectedTrackId] = useState(TRACKS[0].id);
   const [bpmOverride, setBpmOverride] = useState(null);
   const [difficulty, setDifficulty] = useState(1);
+  const [trackTestLevel, setTrackTestLevel] = useState(1);
   const [soundSource, setSoundSource] = useState("Drum Kit");
+  const [queuedSession, setQueuedSession] = useState(null);
   const [successLoops, setSuccessLoops] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -165,6 +207,8 @@ export default function SonicKineticApp() {
   const [isPadPressed, setIsPadPressed] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [countdownBeat, setCountdownBeat] = useState(null);
+  const [resultsSummary, setResultsSummary] = useState({ expected: 0, hit: 0, missed: 0 });
+  const [resultsTrace, setResultsTrace] = useState([]);
 
   const targetPattern = getPatternForSession(difficulty);
   const patternName = getPatternName(difficulty);
@@ -451,6 +495,7 @@ export default function SonicKineticApp() {
   }
 
   function startSession(levelOverride = difficulty, trackIdOverride) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const sessionPattern = getPatternForSession(levelOverride);
     const sessionBpm = resolveSessionBpm(trackIdOverride);
 
@@ -458,9 +503,17 @@ export default function SonicKineticApp() {
       startEngine("GET_READY", getReadyPhrases, sessionPattern, sessionBpm, () => {
         startEngine("TAP", tapPhrases, sessionPattern, sessionBpm, (engine) => {
           const expectedHitCount = sessionPattern.length * tapPhrases;
+          const resolvedHits = engine.hits.filter((hit) => hit.success).length;
+          const missedHits = expectedHitCount - resolvedHits;
           const cleanRound = engine.hits.length === expectedHitCount && engine.hits.every((hit) => hit.success);
           const nextSuccessLoops = cleanRound ? successLoops + 1 : 0;
 
+          setResultsSummary({
+            expected: expectedHitCount,
+            hit: resolvedHits,
+            missed: missedHits,
+          });
+          setResultsTrace([...engine.hits].sort((left, right) => left.absoluteBeat - right.absoluteBeat));
           setSuccessLoops(nextSuccessLoops);
           setPhase("RESULTS");
           setRoute("results");
@@ -471,7 +524,28 @@ export default function SonicKineticApp() {
 
   function restartSession() {
     cleanupLoop();
-    startSession();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPhase("IDLE");
+    setRoute("play");
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(null);
+    setIsBeatActive(false);
+    setIsPadPressed(false);
+    setResultsSummary({ expected: 0, hit: 0, missed: 0 });
+    setResultsTrace([]);
+    setQueuedSession({ trackId: selectedTrackId, level: difficulty });
+  }
+
+  function launchQueuedSession() {
+    if (!queuedSession) {
+      startSession();
+      return;
+    }
+
+    const { trackId, level } = queuedSession;
+    setQueuedSession(null);
+    startSession(level, trackId);
   }
 
   function stopCurrentRun(nextRoute = "home") {
@@ -483,15 +557,19 @@ export default function SonicKineticApp() {
     setCountdownBeat(null);
     setIsBeatActive(false);
     setIsPadPressed(false);
+    setQueuedSession(null);
+    setResultsSummary({ expected: 0, hit: 0, missed: 0 });
+    setResultsTrace([]);
   }
 
-  function startFreshPractice(nextTrackId) {
+  function startFreshPractice(nextTrackId, levelOverride = 1) {
     cleanupLoop();
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (nextTrackId) {
       setSelectedTrackId(nextTrackId);
       setBpmOverride(null);
     }
-    setDifficulty(1);
+    setDifficulty(levelOverride);
     setSuccessLoops(0);
     setScore(0);
     setStreak(0);
@@ -500,12 +578,26 @@ export default function SonicKineticApp() {
     setLastHit(null);
     setMarkers([]);
     setCountdownBeat(null);
-    startSession(1, nextTrackId);
+    setPhase("IDLE");
+    setRoute("play");
+    setResultsSummary({ expected: 0, hit: 0, missed: 0 });
+    setResultsTrace([]);
+    setQueuedSession({ trackId: nextTrackId ?? selectedTrackId, level: levelOverride });
   }
 
   function retryLevel() {
     cleanupLoop();
-    startSession();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPhase("IDLE");
+    setRoute("play");
+    setLastHit(null);
+    setMarkers([]);
+    setCountdownBeat(null);
+    setIsBeatActive(false);
+    setIsPadPressed(false);
+    setResultsSummary({ expected: 0, hit: 0, missed: 0 });
+    setResultsTrace([]);
+    setQueuedSession({ trackId: selectedTrackId, level: difficulty });
   }
 
   function startNextLevel() {
@@ -528,6 +620,9 @@ export default function SonicKineticApp() {
     setLastHit(null);
     setMarkers([]);
     setCountdownBeat(null);
+    setQueuedSession(null);
+    setResultsSummary({ expected: 0, hit: 0, missed: 0 });
+    setResultsTrace([]);
   }
 
   function nextTarget(engine, tapTime) {
@@ -582,7 +677,7 @@ export default function SonicKineticApp() {
         if (phase === "TAP") {
           handleTap();
         } else if (phase === "IDLE") {
-          startSession();
+          launchQueuedSession();
         }
       }
     }
@@ -602,6 +697,7 @@ export default function SonicKineticApp() {
   const phaseTone = phase.toLowerCase();
   const toastTone = currentRating.toLowerCase().replaceAll(" ", "-");
   const flowLabel = `1 listen phrase (2 bars) • 1 ready phrase (2 bars) • ${tapPhrases} tap phrases (8 bars)`;
+  const traceSeries = buildTraceSeries(resultsTrace, 640, 220, MAX_HIT_WINDOW_MS);
 
   return (
     <main className="sk-app">
@@ -693,8 +789,15 @@ export default function SonicKineticApp() {
                   <strong>{soundSource}</strong>
                 </label>
                 <label>
-                  <span>Session Flow</span>
-                  <strong>{flowLabel}</strong>
+                  <span>Test Level</span>
+                  <select className="sk-select" onChange={(event) => setTrackTestLevel(Number(event.target.value))} value={trackTestLevel}>
+                    {TEST_LEVELS.map((level) => (
+                      <option key={level} value={level}>
+                        {`L${level} · ${getPatternName(level)}`}
+                      </option>
+                    ))}
+                  </select>
+                  <strong>{`L${trackTestLevel} · ${getPatternName(trackTestLevel)}`}</strong>
                 </label>
               </div>
             </div>
@@ -714,7 +817,7 @@ export default function SonicKineticApp() {
                     <button
                       className="sk-button sk-buttonPrimary"
                       onClick={() => {
-                        startFreshPractice(track.id);
+                        startFreshPractice(track.id, trackTestLevel);
                       }}
                       type="button"
                     >
@@ -793,7 +896,13 @@ export default function SonicKineticApp() {
                 </article>
                 <article>
                   <label>Phrase Grid</label>
-                  <strong>{targetPattern.join(" • ")}</strong>
+                  <div className="sk-patternGrid">
+                    {targetPattern.map((patternBeat) => (
+                      <span className="sk-patternPill" key={patternBeat}>
+                        {patternBeat}
+                      </span>
+                    ))}
+                  </div>
                 </article>
               </div>
 
@@ -806,6 +915,17 @@ export default function SonicKineticApp() {
                 <div className="sk-ring sk-ringOuter" />
                 <div className="sk-ring sk-ringMid" />
                 <div className="sk-ring sk-ringInner" />
+                {phase === "IDLE" && (
+                  <button className="sk-goButton" onClick={launchQueuedSession} type="button">
+                    <span aria-hidden="true" className="sk-goLabel sk-goLabelTop">
+                      Cue
+                    </span>
+                    <span className="sk-goGlyph">▷</span>
+                    <span aria-hidden="true" className="sk-goLabel sk-goLabelBottom">
+                      Ready
+                    </span>
+                  </button>
+                )}
                 <button
                   className={`sk-pad ${isBeatActive ? "is-beatActive" : ""} ${isPadPressed ? "is-hit" : ""}`}
                   disabled={phase !== "TAP"}
@@ -894,13 +1014,52 @@ export default function SonicKineticApp() {
                   <label>Difficulty</label>
                   <strong>L{difficulty}</strong>
                 </article>
+                <article>
+                  <label>Expected Beats</label>
+                  <strong>{resultsSummary.expected}</strong>
+                </article>
+                <article>
+                  <label>Hit</label>
+                  <strong>{resultsSummary.hit}</strong>
+                </article>
+                <article>
+                  <label>Missed</label>
+                  <strong>{resultsSummary.missed}</strong>
+                </article>
               </div>
 
-              <div className="sk-chart">
-                {(history.length ? history.slice(-8) : [35, 60, 30, 85, 42, 70, 26, 48]).map((offset, index) => {
-                  const height = Math.max(18, 100 - Math.min(100, Math.abs(offset) / 1.5));
-                  return <span key={index} style={{ height: `${height}%` }} />;
-                })}
+              <div className="sk-chart" role="img" aria-label="Timing trace with zero milliseconds centered, late hits above and early hits below">
+                <div className="sk-chartAxis sk-chartAxisTop">Late</div>
+                <div className="sk-chartAxis sk-chartAxisCenter">0ms</div>
+                <div className="sk-chartAxis sk-chartAxisBottom">Early</div>
+                <svg className="sk-chartSvg" viewBox="0 0 640 220" preserveAspectRatio="none">
+                  <rect className="sk-chartBand sk-chartBandGood" height="220" width="640" x="0" y="0" />
+                  <rect className="sk-chartBand sk-chartBandGreat" height="146.7" width="640" x="0" y="36.65" />
+                  <rect className="sk-chartBand sk-chartBandPerfect" height="97.8" width="640" x="0" y="61.1" />
+                  <line className="sk-chartGuide" x1="0" x2="640" y1="18" y2="18" />
+                  <line className="sk-chartGuide sk-chartGuideCenter" x1="0" x2="640" y1="110" y2="110" />
+                  <line className="sk-chartGuide" x1="0" x2="640" y1="202" y2="202" />
+                  {resultsTrace.length > 0 ? (
+                    <>
+                      {traceSeries.lineSegments.map((points, index) => (
+                        <polyline className="sk-chartLine" fill="none" key={points || index} points={points} />
+                      ))}
+                      {traceSeries.hitDots.map((dot) => (
+                        <circle className="sk-chartDot" cx={dot.x} cy={dot.y} key={dot.key} r="4.5" />
+                      ))}
+                      {traceSeries.missMarkers.map((marker, index) => (
+                        <g className="sk-chartMiss" key={`${marker.x}-${index}`} transform={`translate(${marker.x} ${marker.y})`}>
+                          <line x1="-6" x2="6" y1="-6" y2="6" />
+                          <line x1="-6" x2="6" y1="6" y2="-6" />
+                        </g>
+                      ))}
+                    </>
+                  ) : (
+                    <text className="sk-chartEmpty" x="320" y="116">
+                      No timing trace yet
+                    </text>
+                  )}
+                </svg>
               </div>
 
               <div className="sk-actions">
