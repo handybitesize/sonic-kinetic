@@ -71,7 +71,7 @@ const GROOVE_LIBRARY = [
     level: 5,
     name: "Funky Drummer",
     source: "Breakbeat",
-    pattern: [0, 1, 1.75, 2.5, 3, 4, 5, 5.75, 6.5, 7],
+    pattern: [0, 1, 1.5, 2.5, 3, 4, 5, 5.5, 6.5, 7],
   },
   {
     level: 6,
@@ -83,13 +83,13 @@ const GROOVE_LIBRARY = [
     level: 7,
     name: "Apache Roll",
     source: "Old School Break",
-    pattern: [0, 0.5, 1, 1.75, 2.5, 3, 4, 4.5, 5.25, 5.75, 6.5, 7],
+    pattern: [0, 0.5, 1, 2.5, 3, 4, 4.5, 5.5, 6.5, 7],
   },
   {
     level: 8,
     name: "Purdie Shuffle",
     source: "Shuffle",
-    pattern: [0, 0.66, 1.66, 2, 2.66, 3.66, 4, 4.66, 5.66, 6, 6.66, 7.66],
+    pattern: [0, 0.66, 2, 2.66, 4, 4.66, 6, 6.66],
   },
   {
     level: 9,
