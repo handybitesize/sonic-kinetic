@@ -318,6 +318,24 @@ export default function SonicKineticApp() {
     return audioContextRef.current;
   }
 
+  async function testAudio() {
+    const audio = await ensureAudio();
+    if (!audio) return;
+
+    const outputNode = audio.createGain();
+    outputNode.gain.value = 0.9;
+    outputNode.connect(audio.destination);
+
+    const startAt = audio.currentTime + 0.05;
+    [0, 0.5, 1, 1.5].forEach((cueBeat) => {
+      playCue(audio, outputNode, startAt + cueBeat * 0.2, cueBeat, soundSource);
+    });
+
+    window.setTimeout(() => {
+      outputNode.disconnect();
+    }, 1200);
+  }
+
   function ensureNoiseBuffer(audioContext) {
     if (noiseBufferRef.current) return noiseBufferRef.current;
     const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.2, audioContext.sampleRate);
@@ -873,6 +891,12 @@ export default function SonicKineticApp() {
                   </select>
                   <strong>{`L${trackTestLevel} · ${getPatternName(trackTestLevel)}`}</strong>
                 </label>
+                <div className="sk-actions">
+                  <button className="sk-button sk-buttonSecondary" onClick={() => void testAudio()} type="button">Test Audio</button>
+                </div>
+                <p className="sk-audioHint">
+                  If you are on iPhone and hear nothing, turn silent mode off and tap <strong>Test Audio</strong> again.
+                </p>
               </div>
             </div>
 

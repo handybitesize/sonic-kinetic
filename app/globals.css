@@ -358,6 +358,17 @@ button {
   font-size: 1.8rem;
 }
 
+.sk-audioHint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.sk-audioHint strong {
+  color: var(--text);
+}
+
 .sk-trackGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
