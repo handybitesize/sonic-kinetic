@@ -302,7 +302,7 @@ export default function SonicKineticApp() {
     engineRef.current = null;
   }
 
-  function ensureAudio() {
+  async function ensureAudio() {
     if (typeof window === "undefined") return null;
     if (!audioContextRef.current) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -311,10 +311,10 @@ export default function SonicKineticApp() {
     }
 
     if (audioContextRef.current.state === "suspended") {
-      audioContextRef.current.resume();
+      await audioContextRef.current.resume();
     }
 
-    setAudioReady(true);
+    setAudioReady(audioContextRef.current.state === "running");
     return audioContextRef.current;
   }
 
@@ -454,7 +454,7 @@ export default function SonicKineticApp() {
     return trackForSession.bpm;
   }
 
-  function startEngine(nextPhase, phasePhrases, sessionPattern, sessionBpm, onComplete) {
+  async function startEngine(nextPhase, phasePhrases, sessionPattern, sessionBpm, onComplete) {
     cleanupLoop();
 
     const beatDuration = 60000 / sessionBpm;
@@ -484,7 +484,7 @@ export default function SonicKineticApp() {
     setMarkers([]);
     setCountdownBeat(nextPhase === "GET_READY" ? phasePhrases * beatsPerPhrase : null);
 
-    const audio = ensureAudio();
+    const audio = await ensureAudio();
     let outputNode = null;
 
     if (audio) {
@@ -558,14 +558,14 @@ export default function SonicKineticApp() {
     animationRef.current = requestAnimationFrame(frame);
   }
 
-  function startSession(levelOverride = difficulty, trackIdOverride) {
+  async function startSession(levelOverride = difficulty, trackIdOverride) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     const sessionPattern = getPatternForSession(levelOverride);
     const sessionBpm = resolveSessionBpm(trackIdOverride);
 
-    startEngine("LISTEN", listenPhrases, sessionPattern, sessionBpm, () => {
-      startEngine("GET_READY", getReadyPhrases, sessionPattern, sessionBpm, () => {
-        startEngine("TAP", tapPhrases, sessionPattern, sessionBpm, (engine) => {
+    await startEngine("LISTEN", listenPhrases, sessionPattern, sessionBpm, () => {
+      void startEngine("GET_READY", getReadyPhrases, sessionPattern, sessionBpm, () => {
+        void startEngine("TAP", tapPhrases, sessionPattern, sessionBpm, (engine) => {
           const expectedHitCount = sessionPattern.length * tapPhrases;
           const resolvedHits = engine.hits.filter((hit) => hit.success).length;
           const missedHits = expectedHitCount - resolvedHits;
@@ -601,15 +601,15 @@ export default function SonicKineticApp() {
     setQueuedSession({ trackId: selectedTrackId, level: difficulty });
   }
 
-  function launchQueuedSession() {
+  async function launchQueuedSession() {
     if (!queuedSession) {
-      startSession();
+      await startSession();
       return;
     }
 
     const { trackId, level } = queuedSession;
     setQueuedSession(null);
-    startSession(level, trackId);
+    await startSession(level, trackId);
   }
 
   function stopCurrentRun(nextRoute = "home") {
@@ -722,11 +722,11 @@ export default function SonicKineticApp() {
     setStreak(0);
   }
 
-  function handleTap() {
+  async function handleTap() {
     const engine = engineRef.current;
     if (!engine || engine.phase !== "TAP") return;
 
-    ensureAudio();
+    await ensureAudio();
 
     const tapTime = performance.now();
     const target = nextTarget(engine, tapTime);
@@ -749,9 +749,9 @@ export default function SonicKineticApp() {
       if (event.code === "Space") {
         event.preventDefault();
         if (phase === "TAP") {
-          handleTap();
+          void handleTap();
         } else if (phase === "IDLE") {
-          launchQueuedSession();
+          void launchQueuedSession();
         }
       }
     }
